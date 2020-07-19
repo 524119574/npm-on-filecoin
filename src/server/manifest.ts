@@ -35,16 +35,10 @@ export const manifest = (config: Options, _app: any) => {
 
     try {
       const manifest = await loadManifest(config, moduleName)
-
-      // because we start the server on a random high port, the previously stored
-      // manifests may have port numbers from the last time we ran, so overwrite
-      // them before returning them to the client
-      // replaceTarballUrls(manifest, config)
-      
-      // console.log('amni', manifest)
       response.statusCode = 200
       response.setHeader('Content-type', 'application/json; charset=utf-8')
-      response.send(JSON.stringify(manifest, null, request.query.format === undefined ? 0 : 2))
+      response.json(manifest)
+      console.info("sent")
     } catch (error) {
       console.error(`💥 Could not load manifest for ${moduleName}`, error) // eslint-disable-line no-console
 
@@ -82,15 +76,13 @@ const sanitiseName = (name:string) : string => {
   return name
 }
 
-const loadManifest = async (_options: Options, _packageName:string) : Promise<any> => {
-  (async () => {
-    const response = await fetch('https://registry.js.ipfs.io/' + _packageName);
-    const json = await response.json();
-  
-    console.log(json);
+const loadManifest = async (_options: Options, _packageName:string) : Promise<JSON> => {
 
-    return json;
-  })();
-
-  return null
+  return new Promise((resolve, _reject) => {
+    (async () => {
+      const response = await fetch('https://registry.js.ipfs.io/' + _packageName);
+      const json = await response.json();   
+      resolve(json)
+    })();
+  })
 }
