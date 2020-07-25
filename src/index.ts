@@ -25,7 +25,6 @@ process.on('SIGINT', cleanUp)
 
 
 const proxyCommand = async (options: Options) => {
-  // options = config(options)
 
   console.info('👩‍🚀 Starting local proxy') // eslint-disable-line no-console
 
@@ -51,9 +50,6 @@ const proxyCommand = async (options: Options) => {
 
   proc.on('close', async (code:number) => {
     console.log(`🎁 ${packageManager} exited with code ${code}`) // eslint-disable-line no-console
-
-    // await rewriteLockfile(options)
-    // await cleanUp()
 
     process.exit(code)
   })
