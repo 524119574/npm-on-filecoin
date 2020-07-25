@@ -25,7 +25,6 @@ export const startServer = async (options: Options):Promise<Server> => {
     app.get('/*', manifest(options, app));
     app.put('/*', publish(options, app))
   
-    // console.log('registy', options.registry)
     // // everything else should just proxy for the registry
     // const registry = proxy(options.registry)
     // app.put('/*', registry)
