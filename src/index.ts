@@ -66,7 +66,9 @@ const setUpOptions = (yargs: any) => { // eslint-disable-line no-unused-expressi
 }
 
 
-yargs.command('$0', 'Installs your js dependencies using IPFS and Filecoin', setUpOptions, proxyCommand).argv;
+yargs.command(
+  '$0', 'Installs your js dependencies using IPFS and Filecoin',
+  setUpOptions, proxyCommand).argv;
 
 
 
