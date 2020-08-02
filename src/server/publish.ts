@@ -21,13 +21,13 @@ export const publish = (_config: Options, _app: any) => {
     const { jobId } = await pow.ffs.pushStorageConfig(cid)
     // watch the FFS job status to see the storage process progressing
     pow.ffs.watchJobs((job) => {
-    if (job.status === JobStatus.JOB_STATUS_CANCELED) {
-      console.log("job canceled")
-    } else if (job.status === JobStatus.JOB_STATUS_FAILED) {
-      console.log("job failed")
-    } else if (job.status === JobStatus.JOB_STATUS_SUCCESS) {
-      console.log("job success!")
-    }
+      if (job.status === JobStatus.JOB_STATUS_CANCELED) {
+        console.log("job canceled")
+      } else if (job.status === JobStatus.JOB_STATUS_FAILED) {
+        console.log("job failed")
+      } else if (job.status === JobStatus.JOB_STATUS_SUCCESS) {
+        console.log("job success!")
+      }
     }, jobId)
 
     console.log(`Uploaded to powergate, cid: ${cid}, token: ${token}.`);
