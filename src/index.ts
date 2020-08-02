@@ -94,14 +94,7 @@ const wrapperCommand = async (options: Options) => {
         const pow = createPow({ host });
         pow.setToken(token);
         const bytes = await pow.ffs.get(cid);
-        console.log(bytes.length);
-        const len = bytes.length;
-        const b = Buffer.alloc(len);
-        for (let i = 0; i < len; i++) {
-          b[i] = bytes[i];
-        }
-        console.log(b);
-        writeFile("test1.tgz", b, 'binary', ()=> console.log());
+        writeFile("test1.tgz", bytes, 'binary', ()=> console.log());
         delete pkgJsonNew.dependencies[prop]
       }
     }
