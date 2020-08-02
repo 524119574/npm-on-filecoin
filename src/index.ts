@@ -4,8 +4,10 @@
 
 import { Options, startServer } from "./server/server"
 import { argv } from "process"
-import { readFileSync, writeFile, rename } from "fs"
+import { readFileSync, writeFile, rename, existsSync, unlinkSync } from "fs"
 import { parse, stringify} from "comment-json"
+import { createPow } from "@textile/powergate-client";
+
 
 require('dnscache')({ enable: true })
 
@@ -53,7 +55,10 @@ const proxyCommand = async (options: Options) => {
 
   proc.on('close', async (code:number) => {
     console.log(`🎁 ${packageManager} exited with code ${code}`) // eslint-disable-line no-console
-
+    if (existsSync("packageOld.json")) {
+      unlinkSync("package.json")
+      rename("packageOld.json", "package.json", (e) => console.log(e))
+    }
     process.exit(code)
   })
 
@@ -68,7 +73,7 @@ const setUpOptions = (yargs: any) => { // eslint-disable-line no-unused-expressi
       })
 }
 
-const wrapperCommand = (options: Options) => {
+const wrapperCommand = async (options: Options) => {
   const commands = process.argv.slice(2)
   console.log("argv", argv, commands)
   if (commands[0] === 'install') {
@@ -76,9 +81,21 @@ const wrapperCommand = (options: Options) => {
     const pkgJsonNew = parse(readFileSync('package.json').toString())
   
     for (const prop in pkgJsonOld.dependencies) {
-      console.log(pkgJsonOld.dependencies[prop])
       if (pkgJsonOld.dependencies[prop].startsWith("fil://")) {
-        console.log(prop)
+        const v:string = pkgJsonOld.dependencies[prop]
+        console.log(v);
+        console.log(typeof v);
+        const cidAndToken:string = v.replace("fil://", "");
+        console.log("cid", cidAndToken);
+        const parts = cidAndToken.split("+");
+        const cid = parts[0];
+        const token = parts[1];
+        const host = "http://0.0.0.0:6002" // or whatever powergate instance you want
+        const pow = createPow({ host });
+        pow.setToken(token);
+        const bytes = await pow.ffs.get(cid);
+        console.log(bytes);
+        writeFile("test1.tgz", Buffer.from(bytes), 'binary', ()=> console.log());
         delete pkgJsonNew.dependencies[prop]
       }
     }
