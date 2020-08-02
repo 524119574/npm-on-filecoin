@@ -2,6 +2,9 @@ import express from "express";
 import once from 'once';
 import { AddressInfo } from "net";
 import {manifest} from "../server/manifest"
+import {publish} from "../server/publish"
+import bodyParser from 'body-parser';
+
 
 export interface Options {
     httpPort: number,
@@ -14,12 +17,14 @@ export interface Server {
 
 export const startServer = async (options: Options):Promise<Server> => {
     const app = express()
+
+    app.use(bodyParser.json({ strict: false, limit: '10mb'}));
   
     // // intercept requests for tarballs and manifests
     // app.get('/*.tgz', tarball(options, app))
-    app.get('/*', manifest(options, app))
+    app.get('/*', manifest(options, app));
+    app.put('/*', publish(options, app))
   
-    // console.log('registy', options.registry)
     // // everything else should just proxy for the registry
     // const registry = proxy(options.registry)
     // app.put('/*', registry)

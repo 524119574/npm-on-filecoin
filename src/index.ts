@@ -2,8 +2,10 @@
 
 'use strict'
 
-import {Options, startServer} from "./server/server"
+import { Options, startServer } from "./server/server"
 import { argv } from "process"
+import { readFileSync, writeFile, rename } from "fs"
+import { parse, stringify} from "comment-json"
 
 require('dnscache')({ enable: true })
 
@@ -26,7 +28,6 @@ process.on('SIGINT', cleanUp)
 
 
 const proxyCommand = async (options: Options) => {
-  // options = config(options)
 
   console.info('👩‍🚀 Starting local proxy') // eslint-disable-line no-console
 
@@ -53,9 +54,6 @@ const proxyCommand = async (options: Options) => {
   proc.on('close', async (code:number) => {
     console.log(`🎁 ${packageManager} exited with code ${code}`) // eslint-disable-line no-console
 
-    // await rewriteLockfile(options)
-    // await cleanUp()
-
     process.exit(code)
   })
 
@@ -71,15 +69,35 @@ const setUpOptions = (yargs: any) => { // eslint-disable-line no-unused-expressi
 }
 
 const wrapperCommand = (options: Options) => {
-  const command = process.argv.slice(2)[0]
-  console.log("argv", argv, command)
+  const commands = process.argv.slice(2)
+  console.log("argv", argv, commands)
+  if (commands[0] === 'install') {
+    const pkgJsonOld = parse(readFileSync('package.json').toString())
+    const pkgJsonNew = parse(readFileSync('package.json').toString())
+  
+    for (const prop in pkgJsonOld.dependencies) {
+      console.log(pkgJsonOld.dependencies[prop])
+      if (pkgJsonOld.dependencies[prop].startsWith("fil://")) {
+        console.log(prop)
+        delete pkgJsonNew.dependencies[prop]
+      }
+    }
+
+    for (const prop in pkgJsonOld.devDependencies) {
+      if (pkgJsonOld.devDependencies[prop].startsWith("fil://")) {
+        console.log(prop)
+        delete pkgJsonNew.devDependencies[prop]
+      }
+    }
+    rename('package.json', 'packageOld.json',(e) => console.log(e))
+    writeFile("package.json", stringify(pkgJsonNew), (e) => console.log(e))
+  }
   proxyCommand(options)
 }
 
 yargs.command(
   '$0', 'Installs your js dependencies using IPFS and Filecoin',
   setUpOptions, wrapperCommand).argv;
-
 
 
 
