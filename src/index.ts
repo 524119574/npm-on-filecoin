@@ -3,6 +3,7 @@
 'use strict'
 
 import {Options, startServer} from "./server/server"
+import { argv } from "process"
 
 require('dnscache')({ enable: true })
 
@@ -69,8 +70,16 @@ const setUpOptions = (yargs: any) => { // eslint-disable-line no-unused-expressi
       })
 }
 
+const wrapperCommand = (options: Options) => {
+  const command = process.argv.slice(2)[0]
+  console.log("argv", argv, command)
+  proxyCommand(options)
+}
 
-yargs.command('$0', 'Installs your js dependencies using IPFS and Filecoin', setUpOptions, proxyCommand).argv;
+yargs.command(
+  '$0', 'Installs your js dependencies using IPFS and Filecoin',
+  setUpOptions, wrapperCommand).argv;
+
 
 
 
