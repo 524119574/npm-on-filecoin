@@ -11,7 +11,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "test": "fil://QmTqsYApEvaBSjH4bizcLBc3LBhfvuJwkv1nXyeXFfkRL9+f484a142-e195-48c5-bc1a-d6e1efd5a782",
     "comment-json": "*",
     "@textile/grpc-powergate-client": "^0.3.0",
     "@textile/powergate-client": "^0.2.0",
