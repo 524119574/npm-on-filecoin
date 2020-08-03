@@ -20,5 +20,8 @@ If you want to install, say `react`, you can run:
 npm-filecoin install react
 ```
 
-
-
+# Dependencies
+You will require the following to have `npm-filecoin` run properly
+* A [powergate](https://github.com/textileio/powergate) server
+* A [Filecoin client](https://lotu.sh/)
+* An [IPFS node](https://docs.ipfs.io/install/) (Or docker [version](https://hub.docker.com/r/ipfs/go-ipfs))
