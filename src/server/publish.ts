@@ -32,7 +32,7 @@ export const publish = (_config: Options, _app: any) => {
       }
     }, jobId)
 
-    console.log(`Uploaded to powergate, cid: ${cid}, token: ${token}.`);
+    console.log(`Uploaded to powergate, cid: ${cid}, token: ${token}`);
     response.statusCode = 201
     response.send({ok: "good", success: true, du: _versions});
   }

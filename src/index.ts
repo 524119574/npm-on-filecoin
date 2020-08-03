@@ -4,7 +4,7 @@
 
 import { Options, startServer } from "./server/server"
 import { argv } from "process"
-import { readFileSync, writeFile, rename, existsSync, unlinkSync } from "fs"
+import { readFileSync, existsSync, unlinkSync, writeFileSync, renameSync } from "fs"
 import { parse, stringify} from "comment-json"
 import { createPow } from "@textile/powergate-client";
 
@@ -13,6 +13,7 @@ require('dnscache')({ enable: true })
 
 const rc = require('rc')
 const { spawn } = require('child_process')
+const tarball = require('tarball-extract')
 
 const yargs = require('yargs').config(rc("npm-on-filecoin", null, {}));
 
@@ -57,7 +58,7 @@ const proxyCommand = async (options: Options) => {
     console.log(`🎁 ${packageManager} exited with code ${code}`) // eslint-disable-line no-console
     if (existsSync("packageOld.json")) {
       unlinkSync("package.json")
-      rename("packageOld.json", "package.json", (e) => console.log(e))
+      renameSync("packageOld.json", "package.json")
     }
     process.exit(code)
   })
@@ -75,18 +76,24 @@ const setUpOptions = (yargs: any) => { // eslint-disable-line no-unused-expressi
 
 const wrapperCommand = async (options: Options) => {
   const commands = process.argv.slice(2)
-  console.log("argv", argv, commands)
   if (commands[0] === 'install') {
-    const pkgJsonOld = parse(readFileSync('package.json').toString())
-    const pkgJsonNew = parse(readFileSync('package.json').toString())
-  
-    for (const prop in pkgJsonOld.dependencies) {
-      if (pkgJsonOld.dependencies[prop].startsWith("fil://")) {
-        const v:string = pkgJsonOld.dependencies[prop]
-        console.log(v);
-        console.log(typeof v);
-        const cidAndToken:string = v.replace("fil://", "");
-        console.log("cid", cidAndToken);
+    console.log("argv 1", argv, commands)
+    await installCommand(options);
+    return
+  }
+  await proxyCommand(options)
+}
+
+const installCommand = async (_options: Options) => {
+  const pkgJsonOld = parse(readFileSync('package.json').toString())
+  const pkgJsonNew = parse(readFileSync('package.json').toString())
+  const protocol = "fil://"
+
+  for (const dep of ["dependencies", "devDependencies"]) {
+    for (const prop in pkgJsonOld[dep]) {
+      const val:string = pkgJsonOld[dep][prop]
+      if (val.startsWith(protocol)) {
+        const cidAndToken:string = val.replace(protocol, "");
         const parts = cidAndToken.split("+");
         const cid = parts[0];
         const token = parts[1];
@@ -94,21 +101,25 @@ const wrapperCommand = async (options: Options) => {
         const pow = createPow({ host });
         pow.setToken(token);
         const bytes = await pow.ffs.get(cid);
-        writeFile("test1.tgz", bytes, 'binary', ()=> console.log());
-        delete pkgJsonNew.dependencies[prop]
-      }
-    }
+        writeFileSync(prop + ".tgz", bytes, 'binary');
+        console.log("extracted!!!");
 
-    for (const prop in pkgJsonOld.devDependencies) {
-      if (pkgJsonOld.devDependencies[prop].startsWith("fil://")) {
-        console.log(prop)
-        delete pkgJsonNew.devDependencies[prop]
+        await tarball.extractTarball(prop + ".tgz", './tmp/' + prop, function(err:any) {
+          if (err) {
+            console.log(err);
+          }
+          console.log("extracted");
+          if (existsSync('./tmp/' + prop + '/package')) {
+            renameSync('./tmp/' + prop + '/package', 'node_modules/' + prop)
+          }
+        })
+        delete pkgJsonNew[dep][prop]
       }
     }
-    rename('package.json', 'packageOld.json',(e) => console.log(e))
-    writeFile("package.json", stringify(pkgJsonNew), (e) => console.log(e))
   }
-  proxyCommand(options)
+
+  renameSync('package.json', 'packageOld.json')
+  writeFileSync("package.json", stringify(pkgJsonNew))
 }
 
 yargs.command(
