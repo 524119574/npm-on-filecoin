@@ -7,11 +7,10 @@ import { argv } from "process"
 import { readFileSync, existsSync, unlinkSync, writeFileSync, renameSync } from "fs"
 import { parse, stringify} from "comment-json"
 import { createPow } from "@textile/powergate-client";
-
+import rc from 'rc'
 
 require('dnscache')({ enable: true })
 
-const rc = require('rc')
 const { spawn } = require('child_process')
 const tarball = require('tarball-extract')
 
@@ -28,8 +27,6 @@ const cleanUp = () => {
 process.on('SIGTERM', cleanUp)
 process.on('SIGINT', cleanUp)
 
-
-
 const proxyCommand = async (options: Options) => {
 
   console.info('👩‍🚀 Starting local proxy') // eslint-disable-line no-console
@@ -45,7 +42,7 @@ const proxyCommand = async (options: Options) => {
     })
   })
 
-  const packageManager = '/usr/local/bin/npm'
+  const packageManager = 'npm'
 
   console.info(`🎁 Installing dependencies with ${packageManager}`) // eslint-disable-line no-console
   const setRegistry = `--registry=http://localhost:${options.httpPort}`;

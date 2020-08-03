@@ -1,14 +1,23 @@
 # npm-on-filecoin
 
-This is a wrapper script around `npm` which allows you to `publish` and `install` using filecoin and IPFS.
+A wrapper script around `npm` allowing you to `publish` and `install` packages using filecoin and IPFS in a de-centralized fashion.
 
-You can start the script by running:
+There are two projects in this repo:
+* npm-filecoin: The main project hosting the proxy server and wrapper script
+* demo-project: A small project that demonstrates installing a dependecy using npm-filecoin
+
+
+You can install the `npm-filecoin` project locally by running:
 ```
-npm run bin
+sudo npm link
 ```
+while inside the `npm-filecoin` repo.
+
+Then, `npm-filecoin` can be used to run any npm commands.
+
 If you want to install, say `react`, you can run:
 ```
-npm run bin install react
+npm-filecoin install react
 ```
 
 

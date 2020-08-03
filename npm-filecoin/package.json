@@ -1,8 +1,11 @@
 {
   "name": "npm-filecoin",
   "version": "1.0.1",
-  "description": "",
+  "description": "A wrapper around npm allowing management of packages using filecoin and IPFS",
   "main": "dist/index.js",
+  "bin": {
+    "npm-filecoin": "dist/index.js"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "compile": "tsc",
@@ -11,24 +14,25 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "test": "fil://QmTqsYApEvaBSjH4bizcLBc3LBhfvuJwkv1nXyeXFfkRL9+f484a142-e195-48c5-bc1a-d6e1efd5a782",
-    "comment-json": "*",
     "@textile/grpc-powergate-client": "^0.3.0",
     "@textile/powergate-client": "^0.2.0",
-    "@types/node": "^14.0.23",
-    "@types/node-fetch": "^2.5.7",
+    "comment-json": "*",
     "dnscache": "^1.0.2",
     "express": "^4.17.1",
     "node-fetch": "^2.6.0",
     "rc": "^1.2.8",
     "react": "^16.13.1",
+    "tarball-extract": "0.0.6",
     "typescript-logging": "^0.6.4",
     "which-promise": "^1.0.0",
     "yargs": "^15.4.1"
   },
   "devDependencies": {
     "@types/express": "^4.17.7",
+    "@types/node": "^14.0.27",
+    "@types/node-fetch": "^2.5.7",
     "@types/once": "^1.4.0",
+    "@types/rc": "^1.1.0",
     "@types/yargs": "^15.0.5",
     "tslint": "^6.1.2",
     "typescript": "^3.9.6"
