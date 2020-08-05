@@ -6,11 +6,14 @@ import { Options, startServer } from "./server/server"
 import { argv } from "process"
 import { readFileSync, writeFile, rename } from "fs"
 import { parse, stringify} from "comment-json"
+import { createPow } from "@textile/powergate-client";
 
 require('dnscache')({ enable: true })
 
 const rc = require('rc')
 const { spawn } = require('child_process')
+const {tarball} = require('tarball-extract')
+
 
 const yargs = require('yargs').config(rc("npm-on-filecoin", null, {}));
 
@@ -28,8 +31,7 @@ process.on('SIGINT', cleanUp)
 
 
 const proxyCommand = async (options: Options) => {
-
-  console.info('👩‍🚀 Starting local proxy') // eslint-disable-line no-console
+  console.info('👩‍🚀 Starting local proxy!') // eslint-disable-line no-console
 
   const server = await startServer(options)
 
