@@ -8,17 +8,14 @@ There are two projects in this repo:
 
 
 You can install the `npm-filecoin` project locally by running:
-
-## Installing existing package using IPFS
-
-You can start the script by running:
-
 ```
 sudo npm link
 ```
 while inside the `npm-filecoin` repo.
 
 Then, `npm-filecoin` can be used to run any npm commands.
+
+## Installing existing package using IPFS
 
 If you want to install, say `react`, you can run:
 ```
@@ -41,7 +38,7 @@ make localnet
 
 And then you can publish you package by running:
 ```
-npm run bin publish <path-to-your-package>
+npm-filecoin publish <path-to-your-package>
 ```
 To test this out we can create a dummy package by running:
 ```
@@ -55,7 +52,7 @@ export const addOne = (n) => n + 1
 ```
 So you can do:
 ```
-npm run bin publish <path-to-your-publish-to-filecoin-directory>
+npm-filecoin publish <path-to-your-publish-to-filecoin-directory>
 ```
 Then you will see an output that is similar to this:
 ```
@@ -71,7 +68,7 @@ In another npm project, modify the `package.json` file to look like following:
 ```
 And then you can run:
 ```
-npm run bin install
+npm-filecoin install
 ```
 And you can used the exported function by doing:
 ```
