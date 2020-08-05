@@ -9,6 +9,8 @@ There are two projects in this repo:
 
 You can install the `npm-filecoin` project locally by running:
 ```
+npm install
+npm run compile
 sudo npm link
 ```
 while inside the `npm-filecoin` repo.

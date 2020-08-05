@@ -1,14 +1,1 @@
-{
-  "name": "demo-project",
-  "version": "1.0.0",
-  "description": "Demo project for npm-filecoin",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "test": "fil://QmTqsYApEvaBSjH4bizcLBc3LBhfvuJwkv1nXyeXFfkRL9+f484a142-e195-48c5-bc1a-d6e1efd5a782"
-  }
-}
+{"name":"demo-project","version":"1.0.0","description":"","main":"index.js","scripts":{"test":"echo \"Error: no test specified\" && exit 1"},"author":"","license":"ISC","dependencies":{}}

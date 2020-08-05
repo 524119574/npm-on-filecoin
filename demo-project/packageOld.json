@@ -1,0 +1,14 @@
+{
+  "name": "demo-project",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "demo-lib": "fil://Qme1iwgjaNKdUmykkwZQSdJndviyAMTN1pBwMxeQg67j7v+a0df19d5-7a3b-4be7-9661-2e37367c3fc1"
+  }
+}
