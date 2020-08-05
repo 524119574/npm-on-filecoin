@@ -13,7 +13,7 @@ require('dnscache')({ enable: true })
 
 const rc = require('rc')
 const { spawn } = require('child_process')
-const tarball = require('tarball-extract')
+import tarball from 'tarball-extract'
 
 const yargs = require('yargs').config(rc("npm-on-filecoin", null, {}));
 
@@ -89,9 +89,9 @@ const installCommand = async (_options: Options) => {
   const pkgJsonNew = parse(readFileSync('package.json').toString())
   const protocol = "fil://"
 
-  for (const dep of ["dependencies", "devDependencies"]) {
-    for (const prop in pkgJsonOld[dep]) {
-      const val:string = pkgJsonOld[dep][prop]
+  for (const depType of ["dependencies", "devDependencies"]) {
+    for (const pkgName in pkgJsonOld[depType]) {
+      const val:string = pkgJsonOld[depType][pkgName]
       if (val.startsWith(protocol)) {
         const cidAndToken:string = val.replace(protocol, "");
         const parts = cidAndToken.split("+");
@@ -101,19 +101,24 @@ const installCommand = async (_options: Options) => {
         const pow = createPow({ host });
         pow.setToken(token);
         const bytes = await pow.ffs.get(cid);
-        writeFileSync(prop + ".tgz", bytes, 'binary');
+        const tarballPath = './tmp/' + pkgName + '.tgz'
+        const tmpPkgPath = './tmp/' + pkgName
+        const finalPkgPath = 'node_modules/' + pkgName
+        writeFileSync(tarballPath, bytes, 'binary');
         console.log("extracted!!!");
 
-        await tarball.extractTarball(prop + ".tgz", './tmp/' + prop, function(err:any) {
+        await tarball.extractTarball(tarballPath, tmpPkgPath, function(err:any) {
           if (err) {
             console.log(err);
           }
-          console.log("extracted");
-          if (existsSync('./tmp/' + prop + '/package')) {
-            renameSync('./tmp/' + prop + '/package', 'node_modules/' + prop)
+          if (existsSync(tmpPkgPath + '/package') && !existsSync(finalPkgPath)) {
+            renameSync(tmpPkgPath + '/package', finalPkgPath);
+          }
+          if (existsSync(tarballPath)) {
+            unlinkSync(tarballPath);
           }
         })
-        delete pkgJsonNew[dep][prop]
+        delete pkgJsonNew[depType][pkgName]
       }
     }
   }
@@ -125,6 +130,8 @@ const installCommand = async (_options: Options) => {
 yargs.command(
   '$0', 'Installs your js dependencies using IPFS and Filecoin',
   setUpOptions, wrapperCommand).argv;
+
+export const addOne = (n:number): number => n + 1
 
 
 

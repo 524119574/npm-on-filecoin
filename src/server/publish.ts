@@ -5,7 +5,6 @@ import { createPow } from "@textile/powergate-client";
 import { JobStatus } from "@textile/grpc-powergate-client/dist/ffs/rpc/rpc_pb"
 import { writeFileSync, readFileSync } from "fs";
 
-
 export const publish = (_config: Options, _app: any) => {
   return async (request:any, response:any, _next:any) => {
     const { _attachments, _versions } = request.body;
