@@ -3,7 +3,7 @@
 'use strict'
 
 import { Options, startServer } from "./server/server"
-import { readFileSync, existsSync, unlinkSync, writeFileSync, renameSync, mkdirSync, createReadStream, rmdirSync } from "fs"
+import { readFileSync, existsSync, unlinkSync, writeFileSync, renameSync, mkdirSync, createReadStream } from "fs"
 import { parse, stringify} from "comment-json"
 import { createPow } from "@textile/powergate-client";
 import { dirname } from 'path'
@@ -81,7 +81,6 @@ const revertPackageChange = () => {
     renameSync(tmpPkgJsonPath, pkgJsonPath)
     ensureDirectoryExist(nodeModulePath + 'dummy.txt')
     execSync(`mv ${tmpDir_}/node_modules/* ${nodeModulePath}`)
-    rmdirSync(`${cwd()}/tmp`)
   }
 }
 
@@ -129,7 +128,7 @@ const installFilDependencies = async (_options: Options) => {
         const pow = createPow({ host });
         pow.setToken(token);
         const bytes = await pow.ffs.get(cid);
-        const tarballPath = cwd() + '/tmp/' + pkgName + '.tgz'
+        const tarballPath = tmpDir_ + '/' + pkgName + '.tgz'
         const tmpPkgPath = tmpDir_ + '/node_modules/' + pkgName
         ensureDirectoryExist(tarballPath);
         writeFileSync(tarballPath, bytes, 'binary');
