@@ -129,13 +129,18 @@ const installFilDependencies = async (_options: Options) => {
         pow.setToken(token);
         const bytes = await pow.ffs.get(cid);
         const tarballPath = tmpDir_ + '/' + pkgName + '.tgz'
-        const tmpPkgPath = tmpDir_ + '/node_modules/' + pkgName
+        const tmpPkgPath = tmpDir_ + '/node_modules/' + 'tmp_' + pkgName
+        const finalPkgPath = tmpDir_ + '/node_modules/' + pkgName
         ensureDirectoryExist(tarballPath);
         writeFileSync(tarballPath, bytes, 'binary');
 
         extractTgz(tarballPath, tmpPkgPath, function(err:any) {
           if (err) {
             console.log(err);
+          }
+          if (existsSync(tmpPkgPath + '/package')) {
+            ensureDirectoryExist(tmpPkgPath);
+            renameSync(tmpPkgPath + '/package', finalPkgPath);
           }
           if (existsSync(tarballPath)) {
             unlinkSync(tarballPath);
