@@ -37,44 +37,37 @@ Then start the local net, you will need to have [docker](https://www.docker.com/
 cd powergate/docker
 make localnet
 ```
-
-And then you can publish you package by running:
-```
-npm-filecoin publish <path-to-your-package>
-```
-To test this out we can create a dummy package by running:
-```
-mkdir publish-to-filecoin
-cd publish-to-filecoin
-npm init // then you can just all used the default setting
-```
-And then you can create a `index.js` in the root directory and create a silly function such as:
-```
-export const addOne = (n) => n + 1
-```
-So you can do:
+To publish a package you can run:
 ```
 npm-filecoin publish <path-to-your-publish-to-filecoin-directory>
 ```
+
+To test this out we can publish our `demo-lib` package by running:
+```
+npm-filecoin publish demo-lib/
+```
+
 Then you will see an output that is similar to this:
 ```
 Uploaded to powergate, cid: QmRfmFCGTVtdxRraxi2Hf9Hvfk5QDYDtBE7cN5LKEfCJyL, token: cbb129b5-b31b-44a9-8039-64fd7aaba80b
 ```
 
-In another npm project, modify the `package.json` file to look like following:
+In `demo-project`, modify the `package.json` file to look like following:
 ```
 "dependencies":{
      "publish-to-filecoin":"fil://QmRfmFCGTVtdxRraxi2Hf9Hvfk5QDYDtBE7cN5LKEfCJyL+cbb129b5-b31b-44a9-8039-64fd7aaba80b",
       ... the rest
   },
 ```
+i.e. `fil://<cid>+<token>`
 And then you can run:
 ```
+cd demo-project
 npm-filecoin install
 ```
 And you can used the exported function by doing:
 ```
-const { addOne } = require('publish-npm-filecoin')
+const { addOne } = require('demo-lib')
 ```
 # Dependencies
 You will require the following to have `npm-filecoin` run properly
