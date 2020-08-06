@@ -2,13 +2,15 @@
 
 A wrapper script around `npm` allowing you to `publish` and `install` packages using filecoin and IPFS in a de-centralized fashion.
 
-There are two projects in this repo:
+There are three projects in this repo:
 * npm-filecoin: The main project hosting the proxy server and wrapper script
 * demo-project: A small project that demonstrates installing a dependecy using npm-filecoin
+* demo-lib: A small library with one function that is to be publish and used by the `demo-project`
 
 
 You can install the `npm-filecoin` project locally by running:
 ```
+cd npm-filecoin
 npm install
 npm run compile
 sudo npm link
