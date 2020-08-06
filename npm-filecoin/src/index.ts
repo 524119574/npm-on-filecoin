@@ -3,7 +3,6 @@
 'use strict'
 
 import { Options, startServer } from "./server/server"
-import { argv } from "process"
 import { readFileSync, existsSync, unlinkSync, writeFileSync, renameSync, mkdirSync, createReadStream } from "fs"
 import { parse, stringify} from "comment-json"
 import { createPow } from "@textile/powergate-client";
@@ -11,6 +10,7 @@ import { dirname } from 'path'
 import {createGunzip} from 'zlib'
 import {Extract} from 'tar'
 import rc from 'rc'
+import {cwd} from 'process'
 
 
 require('dnscache')({ enable: true })
@@ -21,6 +21,9 @@ const { spawn } = require('child_process')
 const yargs = require('yargs').config(rc("npm-on-filecoin", null, {}));
 
 const cleanUpOps : Array<() => Promise<void>> = []
+
+const tmpPkgJsonPath = cwd() + "/tmp/packageOld.json";
+const PkgJsonPath = cwd() + "/package.json";
 
 const cleanUp = () => {
   Promise.all(
@@ -55,14 +58,22 @@ const proxyCommand = async (options: Options) => {
   })
 
   proc.on('close', async (code:number) => {
+    revertPkgJson()
     console.log(`🎁 ${packageManager} exited with code ${code}`) // eslint-disable-line no-console
-    if (existsSync("packageOld.json")) {
-      unlinkSync("package.json")
-      renameSync("packageOld.json", "package.json")
-    }
     process.exit(code)
   })
 
+  proc.on('error', async (_code:number) => {
+    revertPkgJson()
+  })
+
+}
+
+const revertPkgJson = () => {
+  if (existsSync(tmpPkgJsonPath)) {
+    unlinkSync(PkgJsonPath)
+    renameSync(tmpPkgJsonPath, PkgJsonPath)
+  }
 }
 
 const setUpOptions = (yargs: any) => { // eslint-disable-line no-unused-expressions
@@ -86,14 +97,13 @@ const ensureDirectoryExist = (filePath: string) => {
 const wrapperCommand = async (options: Options) => {
   const commands = process.argv.slice(2)
   if (commands[0] === 'install') {
-    console.log("argv 1", argv, commands)
-    await installCommand(options);
-    return
+    await installFilDependencies(options);
+    return;
   }
-  await proxyCommand(options)
+  await proxyCommand(options);
 }
 
-const installCommand = async (_options: Options) => {
+const installFilDependencies = async (_options: Options) => {
   const pkgJsonOld = parse(readFileSync('package.json').toString())
   const pkgJsonNew = parse(readFileSync('package.json').toString())
   const protocol = "fil://"
@@ -110,32 +120,34 @@ const installCommand = async (_options: Options) => {
         const pow = createPow({ host });
         pow.setToken(token);
         const bytes = await pow.ffs.get(cid);
-        const tarballPath = './tmp/' + pkgName + '.tgz'
-        const tmpPkgPath = './tmp/' + pkgName
-        const finalPkgPath = './node_modules/' + pkgName
+        const tarballPath = cwd() + '/tmp/' + pkgName + '.tgz'
+        const tmpPkgPath = cwd() + '/tmp/' + pkgName
+        const finalPkgPath = cwd() + '/node_modules/' + pkgName
         ensureDirectoryExist(tarballPath);
         writeFileSync(tarballPath, bytes, 'binary');
-        console.log("extracted!!!");
 
         extractTgz(tarballPath, tmpPkgPath, function(err:any) {
           if (err) {
             console.log(err);
           }
           if (existsSync(tmpPkgPath + '/package') && !existsSync(finalPkgPath)) {
+            console.log('inside')
             ensureDirectoryExist(finalPkgPath);
             renameSync(tmpPkgPath + '/package', finalPkgPath);
           }
           if (existsSync(tarballPath)) {
             unlinkSync(tarballPath);
           }
+          console.log(`Installed ${pkgName} via filecoin.`)
         })
         delete pkgJsonNew[depType][pkgName]
       }
     }
   }
 
-  renameSync('package.json', 'packageOld.json')
-  writeFileSync("package.json", stringify(pkgJsonNew))
+  ensureDirectoryExist(tmpPkgJsonPath);
+  renameSync(PkgJsonPath, tmpPkgJsonPath);
+  writeFileSync(PkgJsonPath, stringify(pkgJsonNew));
 }
 
 yargs.command(
@@ -147,8 +159,8 @@ const extractTgz = (sourceFile:string, destination:string, callback:any) => {
     createReadStream(sourceFile)
     .pipe(createGunzip())
     .pipe(Extract({ path: destination}))
-    .on('error', function(er:any) { callback(er)})
-    .on("end", function() { callback(null)})
+    .on('error', async function(er: any) { await callback(er)})
+    .on("end", async function() { await callback(null)})
 }
 
 
