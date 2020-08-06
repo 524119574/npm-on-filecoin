@@ -3,7 +3,7 @@
 'use strict'
 
 import { Options, startServer } from "./server/server"
-import { readFileSync, existsSync, unlinkSync, writeFileSync, renameSync, mkdirSync, createReadStream } from "fs"
+import { readFileSync, existsSync, unlinkSync, writeFileSync, renameSync, mkdirSync, createReadStream, rmdirSync } from "fs"
 import { parse, stringify} from "comment-json"
 import { createPow } from "@textile/powergate-client";
 import { dirname } from 'path'
@@ -11,6 +11,8 @@ import {createGunzip} from 'zlib'
 import {Extract} from 'tar'
 import rc from 'rc'
 import {cwd} from 'process'
+import { execSync } from 'child_process';
+import { tmpdir } from 'os'
 
 
 require('dnscache')({ enable: true })
@@ -22,8 +24,10 @@ const yargs = require('yargs').config(rc("npm-on-filecoin", null, {}));
 
 const cleanUpOps : Array<() => Promise<void>> = []
 
-const tmpPkgJsonPath = cwd() + "/tmp/packageOld.json";
-const PkgJsonPath = cwd() + "/package.json";
+const tmpDir_ = tmpdir();
+const tmpPkgJsonPath = tmpDir_ + '/packageOld.json';
+const pkgJsonPath = cwd() + "/package.json";
+const nodeModulePath = cwd() + "/node_modules/"
 
 const cleanUp = () => {
   Promise.all(
@@ -54,25 +58,30 @@ const proxyCommand = async (options: Options) => {
   const setRegistry = `--registry=http://localhost:${options.httpPort}`;
 
   const proc = spawn(packageManager, [setRegistry].concat(process.argv.slice(2)), {
-    stdio: 'inherit'
+    stdio: 'inherit',
+    cwd: cwd()
   })
 
   proc.on('close', async (code:number) => {
-    revertPkgJson()
+    revertPackageChange()
     console.log(`🎁 ${packageManager} exited with code ${code}`) // eslint-disable-line no-console
     process.exit(code)
   })
 
   proc.on('error', async (_code:number) => {
-    revertPkgJson()
+    revertPackageChange()
   })
 
 }
 
-const revertPkgJson = () => {
+// Note
+const revertPackageChange = () => {
   if (existsSync(tmpPkgJsonPath)) {
-    unlinkSync(PkgJsonPath)
-    renameSync(tmpPkgJsonPath, PkgJsonPath)
+    unlinkSync(pkgJsonPath)
+    renameSync(tmpPkgJsonPath, pkgJsonPath)
+    ensureDirectoryExist(nodeModulePath + 'dummy.txt')
+    execSync(`mv ${tmpDir_}/node_modules/* ${nodeModulePath}`)
+    rmdirSync(`${cwd()}/tmp`)
   }
 }
 
@@ -98,14 +107,14 @@ const wrapperCommand = async (options: Options) => {
   const commands = process.argv.slice(2)
   if (commands[0] === 'install') {
     await installFilDependencies(options);
-    return;
   }
+
   await proxyCommand(options);
 }
 
 const installFilDependencies = async (_options: Options) => {
-  const pkgJsonOld = parse(readFileSync('package.json').toString())
-  const pkgJsonNew = parse(readFileSync('package.json').toString())
+  const pkgJsonOld = parse(readFileSync(pkgJsonPath).toString())
+  const pkgJsonNew = parse(readFileSync(pkgJsonPath).toString())
   const protocol = "fil://"
 
   for (const depType of ["dependencies", "devDependencies"]) {
@@ -121,19 +130,13 @@ const installFilDependencies = async (_options: Options) => {
         pow.setToken(token);
         const bytes = await pow.ffs.get(cid);
         const tarballPath = cwd() + '/tmp/' + pkgName + '.tgz'
-        const tmpPkgPath = cwd() + '/tmp/' + pkgName
-        const finalPkgPath = cwd() + '/node_modules/' + pkgName
+        const tmpPkgPath = tmpDir_ + '/node_modules/' + pkgName
         ensureDirectoryExist(tarballPath);
         writeFileSync(tarballPath, bytes, 'binary');
 
         extractTgz(tarballPath, tmpPkgPath, function(err:any) {
           if (err) {
             console.log(err);
-          }
-          if (existsSync(tmpPkgPath + '/package') && !existsSync(finalPkgPath)) {
-            console.log('inside')
-            ensureDirectoryExist(finalPkgPath);
-            renameSync(tmpPkgPath + '/package', finalPkgPath);
           }
           if (existsSync(tarballPath)) {
             unlinkSync(tarballPath);
@@ -146,8 +149,8 @@ const installFilDependencies = async (_options: Options) => {
   }
 
   ensureDirectoryExist(tmpPkgJsonPath);
-  renameSync(PkgJsonPath, tmpPkgJsonPath);
-  writeFileSync(PkgJsonPath, stringify(pkgJsonNew));
+  renameSync(pkgJsonPath, tmpPkgJsonPath);
+  writeFileSync(pkgJsonPath, stringify(pkgJsonNew));
 }
 
 yargs.command(
@@ -162,7 +165,3 @@ const extractTgz = (sourceFile:string, destination:string, callback:any) => {
     .on('error', async function(er: any) { await callback(er)})
     .on("end", async function() { await callback(null)})
 }
-
-
-
-
