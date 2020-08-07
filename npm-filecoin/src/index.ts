@@ -74,6 +74,8 @@ const proxyCommand = async (options: Options) => {
 
 }
 
+// Note that we move node_modules in the very end because, when `npm` runs it will automatically,
+// clear the content of `node_modules` directory, so we only moved it after `npm` is ran.
 const revertPkgJsonAndMovePkgs = () => {
   if (existsSync(tmpPkgJsonPath)) {
     unlinkSync(pkgJsonPath)
