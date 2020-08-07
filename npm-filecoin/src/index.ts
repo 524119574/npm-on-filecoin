@@ -63,19 +63,18 @@ const proxyCommand = async (options: Options) => {
   })
 
   proc.on('close', async (code:number) => {
-    revertPackageChange()
+    revertPkgJsonAndMovePkgs()
     console.log(`🎁 ${packageManager} exited with code ${code}`) // eslint-disable-line no-console
     process.exit(code)
   })
 
   proc.on('error', async (_code:number) => {
-    revertPackageChange()
+    revertPkgJsonAndMovePkgs()
   })
 
 }
 
-// Note
-const revertPackageChange = () => {
+const revertPkgJsonAndMovePkgs = () => {
   if (existsSync(tmpPkgJsonPath)) {
     unlinkSync(pkgJsonPath)
     renameSync(tmpPkgJsonPath, pkgJsonPath)
