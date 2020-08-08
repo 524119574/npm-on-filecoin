@@ -1,7 +1,11 @@
 {
   "name": "demo-project",
   "version": "1.0.0",
-  "description": "",
+  "description": "This is a demo project",
+  "repository": {
+    "type" : "git",
+    "url" : "https://github.com/524119574/npm-on-filecoin"
+  },
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -9,6 +13,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "demo-lib": "fil://Qme1iwgjaNKdUmykkwZQSdJndviyAMTN1pBwMxeQg67j7v+a0df19d5-7a3b-4be7-9661-2e37367c3fc1"
+    "demo-lib": "fil://QmdP3nrDgbrvXCeSxA7oXjQ7Td7ZY5GKCtAMaNrCPgNEFC+a71d9bde-fdb1-45bc-9b51-bcd270372e49"
   }
 }

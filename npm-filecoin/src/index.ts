@@ -3,7 +3,6 @@
 'use strict'
 
 import { Options, startServer } from "./server/server"
-import { argv } from "process"
 import { readFileSync, existsSync, unlinkSync, writeFileSync, renameSync, mkdirSync, createReadStream } from "fs"
 import { parse, stringify} from "comment-json"
 import { createPow } from "@textile/powergate-client";
@@ -11,6 +10,9 @@ import { dirname } from 'path'
 import {createGunzip} from 'zlib'
 import {Extract} from 'tar'
 import rc from 'rc'
+import {cwd} from 'process'
+import { execSync } from 'child_process';
+import { tmpdir } from 'os'
 
 
 require('dnscache')({ enable: true })
@@ -21,6 +23,11 @@ const { spawn } = require('child_process')
 const yargs = require('yargs').config(rc("npm-on-filecoin", null, {}));
 
 const cleanUpOps : Array<() => Promise<void>> = []
+
+const tmpDir_ = tmpdir();
+const tmpPkgJsonPath = tmpDir_ + '/packageOld.json';
+const pkgJsonPath = cwd() + "/package.json";
+const nodeModulePath = cwd() + "/node_modules/"
 
 const cleanUp = () => {
   Promise.all(
@@ -51,18 +58,31 @@ const proxyCommand = async (options: Options) => {
   const setRegistry = `--registry=http://localhost:${options.httpPort}`;
 
   const proc = spawn(packageManager, [setRegistry].concat(process.argv.slice(2)), {
-    stdio: 'inherit'
+    stdio: 'inherit',
+    cwd: cwd()
   })
 
   proc.on('close', async (code:number) => {
+    revertPkgJsonAndMovePkgs()
     console.log(`🎁 ${packageManager} exited with code ${code}`) // eslint-disable-line no-console
-    if (existsSync("packageOld.json")) {
-      unlinkSync("package.json")
-      renameSync("packageOld.json", "package.json")
-    }
     process.exit(code)
   })
 
+  proc.on('error', async (_code:number) => {
+    revertPkgJsonAndMovePkgs()
+  })
+
+}
+
+// Note that we move node_modules in the very end because, when `npm` runs it will automatically,
+// clear the content of `node_modules` directory, so we only moved it after `npm` is ran.
+const revertPkgJsonAndMovePkgs = () => {
+  if (existsSync(tmpPkgJsonPath)) {
+    unlinkSync(pkgJsonPath)
+    renameSync(tmpPkgJsonPath, pkgJsonPath)
+    ensureDirectoryExist(nodeModulePath + 'dummy.txt')
+    execSync(`mv ${tmpDir_}/node_modules/* ${nodeModulePath}`)
+  }
 }
 
 const setUpOptions = (yargs: any) => { // eslint-disable-line no-unused-expressions
@@ -86,16 +106,15 @@ const ensureDirectoryExist = (filePath: string) => {
 const wrapperCommand = async (options: Options) => {
   const commands = process.argv.slice(2)
   if (commands[0] === 'install') {
-    console.log("argv 1", argv, commands)
-    await installCommand(options);
-    return
+    await installFilDependencies(options);
   }
-  await proxyCommand(options)
+
+  await proxyCommand(options);
 }
 
-const installCommand = async (_options: Options) => {
-  const pkgJsonOld = parse(readFileSync('package.json').toString())
-  const pkgJsonNew = parse(readFileSync('package.json').toString())
+const installFilDependencies = async (_options: Options) => {
+  const pkgJsonOld = parse(readFileSync(pkgJsonPath).toString())
+  const pkgJsonNew = parse(readFileSync(pkgJsonPath).toString())
   const protocol = "fil://"
 
   for (const depType of ["dependencies", "devDependencies"]) {
@@ -110,32 +129,33 @@ const installCommand = async (_options: Options) => {
         const pow = createPow({ host });
         pow.setToken(token);
         const bytes = await pow.ffs.get(cid);
-        const tarballPath = './tmp/' + pkgName + '.tgz'
-        const tmpPkgPath = './tmp/' + pkgName
-        const finalPkgPath = './node_modules/' + pkgName
+        const tarballPath = tmpDir_ + '/' + pkgName + '.tgz'
+        const tmpPkgPath = tmpDir_ + '/node_modules/' + 'tmp_' + pkgName
+        const finalPkgPath = tmpDir_ + '/node_modules/' + pkgName
         ensureDirectoryExist(tarballPath);
         writeFileSync(tarballPath, bytes, 'binary');
-        console.log("extracted!!!");
 
         extractTgz(tarballPath, tmpPkgPath, function(err:any) {
           if (err) {
             console.log(err);
           }
-          if (existsSync(tmpPkgPath + '/package') && !existsSync(finalPkgPath)) {
-            ensureDirectoryExist(finalPkgPath);
+          if (existsSync(tmpPkgPath + '/package')) {
+            ensureDirectoryExist(tmpPkgPath);
             renameSync(tmpPkgPath + '/package', finalPkgPath);
           }
           if (existsSync(tarballPath)) {
             unlinkSync(tarballPath);
           }
+          console.log(`Installed ${pkgName} via filecoin.`)
         })
         delete pkgJsonNew[depType][pkgName]
       }
     }
   }
 
-  renameSync('package.json', 'packageOld.json')
-  writeFileSync("package.json", stringify(pkgJsonNew))
+  ensureDirectoryExist(tmpPkgJsonPath);
+  renameSync(pkgJsonPath, tmpPkgJsonPath);
+  writeFileSync(pkgJsonPath, stringify(pkgJsonNew));
 }
 
 yargs.command(
@@ -147,10 +167,6 @@ const extractTgz = (sourceFile:string, destination:string, callback:any) => {
     createReadStream(sourceFile)
     .pipe(createGunzip())
     .pipe(Extract({ path: destination}))
-    .on('error', function(er:any) { callback(er)})
-    .on("end", function() { callback(null)})
+    .on('error', async function(er: any) { await callback(er)})
+    .on("end", async function() { await callback(null)})
 }
-
-
-
-
