@@ -1,12 +1,12 @@
 'use strict'
 
-import {Options} from "../server/server";
 import { createPow } from "@textile/powergate-client";
 import { JobStatus } from "@textile/grpc-powergate-client/dist/ffs/rpc/rpc_pb"
+import { Options } from "../server/server";
 import { writeFileSync, readFileSync } from "fs";
 
 export const publish = (_config: Options, _app: any) => {
-  return async (request:any, response:any, _next:any) => {
+  return async (request:any, response:any, _next:any)  => {
     const { _attachments, _versions } = request.body;
     const [firstAttachmentKey] = Object.keys(_attachments);
     console.log("first attachment key: ", firstAttachmentKey)
@@ -23,11 +23,11 @@ export const publish = (_config: Options, _app: any) => {
     // watch the FFS job status to see the storage process progressing
     pow.ffs.watchJobs((job) => {
       if (job.status === JobStatus.JOB_STATUS_CANCELED) {
-        console.log("job canceled")
+        console.log("Job canceled.")
       } else if (job.status === JobStatus.JOB_STATUS_FAILED) {
-        console.log("job failed")
+        console.log("Job failed.")
       } else if (job.status === JobStatus.JOB_STATUS_SUCCESS) {
-        console.log("job success!")
+        console.log("Job success!")
       }
     }, jobId)
 
